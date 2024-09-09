@@ -1,0 +1,32 @@
+image: jangrewe/gitlab-ci-android
+
+stages:
+  - build
+  - test
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m"
+
+before_script:
+  - echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+  - echo y | sdkmanager --licenses
+
+build:
+  stage: build
+  image: openjdk:17-jdk
+  script:
+    - apt-get update
+    - apt-get install -y wget unzip
+    - wget https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+    - unzip commandlinetools-linux-7583922_latest.zip -d $ANDROID_SDK_ROOT
+    - mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+    - mv $ANDROID_SDK_ROOT/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest
+    - sdkmanager --update
+    - sdkmanager "platforms;android-30" "build-tools;30.0.3"
+    - ./gradlew assembleDebug
+
+test:
+  stage: test
+  image: openjdk:17-jdk
+  script:
+    - ./gradlew test
